@@ -96,7 +96,7 @@ begin
             Continuer := false;
 
         when others =>
-            Interface = Interface_Sortie ();
+            Interface := Interface_Sortie ();
             Put (Sortie_resultats, Ligne_p & Interface);
             New_Line (Sortie_resultats);
 
@@ -114,7 +114,7 @@ begin
     Sortie_Resultats : File_Type;
     Continuer : Boolean;
     Num_Ligne : Integer;
-    Ligne_p : Unbounded_String
+    Ligne_p : Unbounded_String;
 
     begin
 
@@ -134,19 +134,13 @@ begin
         Close (Entree_paquets);
         Close (Sortie_resultats);
 
-    end Construit_Resultat
+    end Construit_Resultat;
 
     Recup_Arguments (Table, Paquets, Resultats);
     Construit_Table (Table_Routage, Table);
     Construit_Resultat (Paquets, Resultats, Table_Routage);
 
 end Routeur_Simple;
-
-
-
-
-
-
 
 
 
@@ -174,7 +168,7 @@ end Interface_Sortie;
 procedure Valeur_A_Masquer (Ligne_p; Table) is
 begin
 
-     indice := 1;
+    indice := 1;
 	premier_str := “”;
 	chaine_entier := “”
 
