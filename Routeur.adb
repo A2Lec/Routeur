@@ -184,8 +184,8 @@ package body Routeur is
                 end loop;
             end;
 
-            -- On écrit le résultat : adresse IP -> interface trouvée
-            Put(Sortie_Resultats, S_Ligne & " -> " & To_String(Interface_Trouvee));
+            -- On écrit le résultat : adresse IP interface trouvée
+            Put(Sortie_Resultats, S_Ligne & " " & To_String(Interface_Trouvee));
             New_Line(Sortie_Resultats);
         end if;
     end Traiter_Ligne;
@@ -210,13 +210,13 @@ package body Routeur is
 
         
         while not End_Of_File(Entree_Paquets) and Continuer loop
-            -- Récupérer le numéro de la ligne actuelle
+            -- On récupère le numéro de la ligne actuelle
             Num_Ligne := Integer(Line(Entree_Paquets)); 
             
-            -- Lire la ligne du fichier
+            -- On lit la ligne du fichier
             Ligne_P := To_Unbounded_String(Get_Line(Entree_Paquets)); 
             
-            -- Traiter la ligne et écrire le résultat dans le fichier de sortie
+            -- On traite la ligne et on écrit le résultat dans le fichier de sortie
             Traiter_Ligne(Ligne_P, Num_Ligne, Sortie_Resultats, Continuer, La_Table);
         end loop;
 
