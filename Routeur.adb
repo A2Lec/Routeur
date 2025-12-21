@@ -24,15 +24,15 @@ package body Routeur is
        
         -- On parcourt tous les arguments et on cherche les valeurs -t, -q, -r
         for i in 1 .. Argument_Count loop
-            if Argument(i) = "-t" and then i < Argument_Count then
+            if Argument(i) = "-t" and i < Argument_Count then
                 -- Si -t trouvé, récupérer l'argument suivant comme fichier table
                 Table := To_Unbounded_String(Argument(i + 1));
 
-            elsif Argument(i) = "-q" and then i < Argument_Count then
+            elsif Argument(i) = "-q" and i < Argument_Count then
                 -- même chose pour fichier paquets
-                Paquets := To_Unbounded_String(Argument(i + 1)); 
+                Paquets := To_Unbounded_String(Argument(i + 1));
 
-            elsif Argument(i) = "-r" and then i < Argument_Count then
+            elsif Argument(i) = "-r" and i < Argument_Count then
                 -- même chose pour fichier résultats
                 Resultats := To_Unbounded_String(Argument(i + 1));
             end if;
@@ -119,19 +119,22 @@ package body Routeur is
         Cle_recherche : Unbounded_String;
         Pipe_Pos : Integer;
 
-        -- Affiche une clé lors du diagnostic de la table
+        IP_precedent : Unbounded_String;
+        Trouve : Boolean := False;
+
+        -- Pour afficher une clé lors du diagnostic de la table
         procedure Afficher_Cle (Cle : in Unbounded_String) is
         begin
             Put(Sortie_Resultats, To_String(Cle));
         end Afficher_Cle;
 
-        -- Affiche une valeur lors du diagnostic de la table
+        -- Pour afficher une valeur lors du diagnostic de la table
         procedure Afficher_Donnee (Valeur : in Unbounded_String) is
         begin
             Put(Sortie_Resultats, " -> " & To_String(Valeur));
         end Afficher_Donnee;
 
-        -- Procédure générique pour afficher tout le contenu de la table
+        -- Pour afficher tout le contenu de la table
         procedure Afficher_Tout is new Tab_Routage.Afficher_Diagnostic(Afficher_Cle, Afficher_Donnee);
         
         Interface_Trouvee : Unbounded_String := To_Unbounded_String("?");  -- Valeur par défaut si pas trouvée
@@ -157,14 +160,11 @@ package body Routeur is
         elsif S_Ligne'Length > 0 then
             -- Pour traiter une adresse IP
             -- On initialise la clé de recherche avec l'adresse IP complète
-            Lookup_Key := To_Unbounded_String(S_Ligne);            
+            Cle_recherche := To_Unbounded_String(S_Ligne);            
 
-            IP_Masquee := Lookup_Key;
+            IP_Masquee := Cle_recherche;
 
             -- On cherche l'adresse IP en masquant progressivement un bit à la fois
-            declare
-                IP_precedent : Unbounded_String;
-                Trouve : Boolean := False;
             begin
                 while not Trouve loop
                     if Tab_Routage.Cle_Presente(La_Table, IP_Masquee) then
