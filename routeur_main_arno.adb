@@ -22,20 +22,17 @@ begin
     Put_Line("Lecture des paquets   : " & To_String(Nom_Fichier_Paquets));
     Put_Line("Ecriture resultats    : " & To_String(Nom_Fichier_Resultats));
 
+
     Routeur.Construire_Table (
         Table_Routage => La_Table_Routage,
         Table    => Nom_Fichier_Table
     );
 
-    Put ("Ok?");
 
     Routeur.Traiter_Fichiers_Paquets (
         Paquets => Nom_Fichier_Paquets,
         Resultats => Nom_Fichier_Resultats,
         Table_Routage => La_Table_Routage
     );
-
-
-    Put_Line("Traitement termine.");
 
 end Routeur_Main;
