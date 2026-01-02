@@ -1,174 +1,165 @@
+with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Integer_Text_IO;       use Ada.Integer_Text_IO;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings;               use Ada.Strings;
 
-package body IP is
+package body Adresse_IP is
+
+    function Modifie_Entier (Entier : Integer) return Integer is
+
+        Puissance : Integer;
+
+    begin
+        Puissance := Zero_Entier(Entier);
+        return Entier - 2 ** Puissance;
+
+    end Modifie_Entier;
+
+    function Ub_To_Ip (Chaine : Unbounded_String) return T_IP is
+    begin
+	return T_IP(Chaine);
+    end Ub_To_Ip;
+
+    function Ip_To_Ub (Adresse : T_IP) return Unbounded_String is
+    begin 
+	return Unbounded_String(Adresse);
+    end Ip_To_Ub;
+
+   
+    procedure Kieme_Adresse (K : in Integer; Adresse : in T_IP; Indice : out Integer; Valeur : out Integer) is
+        Copie_Adresse : constant String := To_String (Adresse);
+        Indice_Fin : Integer;
+        Taille : Integer;
+
+    begin
+        -- Put_Line("Kieme_Adresse K=" & Integer'Image(K) & " Adr=" & Copie_Adresse);
+        Taille := Copie_Adresse'Length;
+        Indice := 1;
+
+        for i in 2..K loop
+            while Indice <= Taille and then Copie_Adresse(Indice) /= '.' loop
+                Indice := Indice + 1;
+            end loop;
+	    Indice := Indice + 1;
+        end loop;
+
+        Indice_Fin := Indice;
+        while Indice_Fin <= Taille and then Copie_Adresse(Indice_Fin) /= '.' loop
+            Indice_Fin := Indice_Fin + 1;
+        end loop;
+
+	Indice_Fin := Indice_Fin - 1;
+
+        Valeur := Integer'Value (Copie_Adresse (Indice .. Indice_Fin));
+
+    end Kieme_Adresse;
+
+    procedure Adresse_Non_Nul (Adresse : in T_IP; Indice : out Integer; Valeur : out Integer) is
+
+        Compteur : Integer;
+    begin
+
+        Compteur := 4;
+
+        loop
+            -- Put_Line("Adresse_Non_Nul Compteur=" & Integer'Image(Compteur));
+            Kieme_Adresse (Compteur, Adresse, Indice, Valeur);
+	   
+            Compteur := Compteur - 1;
+            exit when Valeur /= 0 or Compteur < 0;
+        end loop;
+    end Adresse_Non_Nul;
 
 
 
     procedure Masquer_bit (Adresse : in out T_IP) is
 
-        procedure Valeur_A_Masquer (Adresse_Str : in String; Indice : out Integer; Valeur : out Integer) is
-            Taille : Integer;
-            Premier_Str : String;
-            Chaine_Entier : String;
-        begin
-            Taille := Length(Adresse);
-            Indice := 1;
-            Premier_Str := “”;
-            Chaine_Entier := “”;
-
-            for i in 1..Taille loop
-
-                if Adresse_Str(i) /= “.” then
-                    Chaine_Entier := Chaine_Entier & Adresse(i);
-
-                elsif Chaine_Entier /= “0” then
-                    Indice := i - Chaine_Entier’Length;
-                    Premier_Str := Chaine_Entier;
-                    Chaine_Entier := “”;
-
-                else
-                    Chaine_Entier := “”;
-
-                end if;
-            end loop;
-
-            Valeur := Integer'Value(Premier_Str);
-
-        end Valeur_A_Masquer;
-
-        function Modifie_Entier (Premier : Integer) return Integer is
-
-            Puissance : Integer;
-            Valeur_Mod : Integer;
-        begin
-            Puissance := 0;
-            Valeur_Mod := Premier;
-            while Valeur_Mod mod 2 != 1 loop
-
-                Puissance := Puissance + 1;
-                Valeur_Mod := Valeur_Mod / 2;
-
-            end loop;
-            return Premier - 2 ** puissance;
-
-        end Modifie_Entier;
-
         Indice : Integer;
-        Adresse_Str : String;
+        Adresse_Str : constant String := To_String (Adresse);
         Valeur : Integer;
-        Valeur_Str : String;
+	Valeur_Str_Init : Unbounded_String;
+        Valeur_Str : Unbounded_String;
+	Debut : Unbounded_String;
+	Fin : Unbounded_String;
 
     begin
-        Adresse_Str := To_String (Adresse);
-        Valeur_A_Masquer (Adresse_Str, Indice, Valeur);
+
+        Adresse_Non_Nul (Adresse, Indice, Valeur);
+
+	Valeur_Str_Init := To_Unbounded_String(Trim (Integer'Image (Valeur), Left));
         Valeur := Modifie_Entier (Valeur);
-        Valeur_Str = Integer'Image(Valeur);
-        Adresse_Str := Adresse_Str(1 .. indice - 1) & Valeur_Str & Adresse_Str (Indice + Valeur_Str’Length .. Adresse_Str‘Last);
-        Adresse := To_Unbounded_String (Adresse_Str);
+        Valeur_Str := To_Unbounded_String (Trim (Integer'Image (Valeur), Left));
+	
+	if Adresse_Str'First <= Indice - 1 then 
+		Debut := To_Unbounded_String(Adresse_Str(Adresse_Str'First .. Indice - 1));
+	else
+		Debut := To_Unbounded_String("");
+	end if;
+
+	if Indice + Length(Valeur_Str_Init) <= Adresse_Str'Last then
+		Fin := To_Unbounded_String(Adresse_Str (Indice + Length(Valeur_Str_Init) .. Adresse_Str'Last));
+	else
+		Fin := To_Unbounded_String("");
+	end if;
+
+        Adresse := To_Unbounded_String (To_String(Debut) & To_String(Valeur_Str) & To_String(Fin));
 
     end Masquer_bit;
 
 
-    procedure Masquer_adresse (Adresse : in out T_IP; Masque : in T_Masque)
-
+    function Zero_Entier (Valeur : Integer) return Integer is
+        Nb : Integer;
+        Copie : Integer;
     begin
-        -- difficulté : trouver combien de fois il faut l'appliquer
-        -- modifier la procédure précédente ?
-
-
-    end Masquer_adresse;
-
-
-end IP;
-
-
-
-Proposition Alexis :
-
-function Longueur_masque(Masque : in Unbounded_String) is
-    compteur : Integer := 0;
-    bit_test : T_Adresse_IP := 2 ** 31;
-begin
-    for i in 1..32 loop
-        if (Masque and bit_test) /= 0 then
-            compteur := compteur + 1;
-        end if;
-        bit_test := bit_test /2;
-    end loop;
-    return compteur;
-
-end;
-
-function Trouver_route_optimale(Table : in T_Table; IP_donnee : in T_Adresse_IP) return T_Adresse_IP is
-    IP_opti : T_Adresse_IP := 0;
-
-    Max_Longueur : Integer := -1;
-
-    IP_Calculee  : T_Adresse_IP;
-    Len_Actuelle : Integer;
-
-    Masque_str : Unbounded_String;
-    IP_masque_str : Unbounded_String;
-
-    Masque_Val : T_Adresse_IP;
-    IP_masque_Val : T_Adresse_IP;
-
-begin
-
-    for ligne in 1..Taille(Table) loop
-
-        Masque := recuperer_masque(Table, ligne);
-        -- IP_masque := recuperer_IP(Table, ligne);
-
-        IP_Calculee := IP_donnee and Masque;
-
-        if IP_Calculee = IP_masque then
-
-            Len_Actuelle := Longueur_masque(Masque_Val);
-
-            if Len_Actuelle > Max_Longueur then
-                Max_Longueur := Len_Actuelle;
-                IP_opti      := IP_Calculee;
-
-            end if;
-
-        end if;
-
-    end loop;
-
-    return IP_opti;
-end Trouver_route_optimale;
-
-function Text_to_IP(Text : in Unbounded_String) return T_Adresse_IP is
-    Resultat : T_Adresse_IP := 0;
-    Partie   : Unbounded_String;
-    Pos      : Integer := 1;
-    Octet_Val : T_Octet;
-begin
-    for i in 0..3 loop
-        Partie := "";
-        while Pos <= Length(Text) and then Text(Pos) /= '.' loop
-            Partie := Partie & Text(Pos);
-            Pos := Pos + 1;
+        Nb := 0;
+        Copie := Valeur;
+        while Copie mod 2 ** (Nb + 1) = 0 loop
+            Nb := Nb + 1;
         end loop;
 
-        Octet_Val := T_Octet(Integer'Value(To_String(Trim(Partie))));
-        Resultat := Resultat * 256 + T_Adresse_IP(Octet_Val);
+        return Nb;
+    end Zero_Entier;
 
-        Pos := Pos + 1;
-    end loop;
-    return Resultat;
-end Text_to_IP;
 
-function recuperer_masque(Table : in T_Table; ligne : in Integer) return T_Adresse_IP is
-    Masque_str : Unbounded_String;
-begin
-    Masque_str := Get_Champ(Table, ligne, 2);
-    return Text_to_IP(Masque_str);
-end recuperer_masque;
+	 
+    function Adresse_Zero_Bit (Adresse : T_IP) return Integer is
 
-function recuperer_IP(Table : in T_Table; ligne : in Integer) return T_Adresse_IP is
-    IP_str : Unbounded_String;
-begin
-    IP_str := Get_Champ(Table, ligne, 1);
-    return Text_to_IP(IP_str);
-end recuperer_IP;
+        Nb : Integer;
+        Indice : Integer;
+        Valeur : Integer;
+	Valeur_Str : Unbounded_String;
+
+    begin
+        Adresse_Non_Nul (Adresse, Indice, Valeur);
+        if Valeur = 0 then
+            return 32;
+        end if;
+	Valeur_Str := To_Unbounded_String(Trim (Integer'Image (Valeur), Left));
+        Nb := Zero_Entier (Valeur);
+        Nb := Nb + 4 * (Length(Ip_To_Ub(Adresse)) - (Indice + Length(Valeur_Str) - 1)) ;
+        return Nb;
+    end Adresse_Zero_Bit;
+
+
+    procedure Masquer_Adresse (Adresse : in out T_IP; Masque : in T_IP) is
+        Val_A, Val_M, Res : Integer;
+        Indice_A, Indice_M : Integer;
+        Nouvelle_Adresse : Unbounded_String := To_Unbounded_String("");
+        type Byte is mod 256;
+    begin
+        for K in 1..4 loop
+            Kieme_Adresse(K, Adresse, Indice_A, Val_A);
+            Kieme_Adresse(K, Masque, Indice_M, Val_M);
+            
+            Res := Integer(Byte(Val_A) and Byte(Val_M));
+
+            if K > 1 then
+                Nouvelle_Adresse := Nouvelle_Adresse & ".";
+            end if;
+            Nouvelle_Adresse := Nouvelle_Adresse & Trim(Integer'Image(Res), Left);
+        end loop;
+        
+        Adresse := Ub_To_Ip(Nouvelle_Adresse);
+    end Masquer_Adresse;
+
+end Adresse_IP;

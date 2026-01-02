@@ -1,11 +1,18 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with LCA; 
+with LCA;
+with Adresse_IP;  use Adresse_IP;
 
 package Routeur is
 
-    package Tab_Routage is new LCA (T_Cle => Unbounded_String, T_Valeur => Unbounded_String);
-    subtype T_Table_Routage is Tab_Routage.T_LCA;
+    type T_Route is record
+       Masque : T_IP;
+       Inter  : Unbounded_String;
+    end record;
 
+    package Tab_Routage is new LCA (T_Cle => T_IP, T_Valeur => T_Route);
+    use Tab_Routage;
+
+    
     procedure Recuperer_Arguments (
         Table     : out Unbounded_String;
         Paquets   : out Unbounded_String;
@@ -13,15 +20,16 @@ package Routeur is
     );
 
     procedure Construire_Table (
-        Nom_Fichier : in Unbounded_String;
-        La_Table    : out T_Table_Routage
+	Table_Routage    : out T_LCA;
+        Table : in Unbounded_String
+        
     );
 
 
     procedure Traiter_Fichiers_Paquets (
-        Fichier_Paquets   : in Unbounded_String;
-        Fichier_Resultats : in Unbounded_String;
-        La_Table          : in T_Table_Routage
+        Paquets   : in Unbounded_String;
+        Resultats : in Unbounded_String;
+        Table_Routage : in T_LCA
     );
 
 end Routeur;
