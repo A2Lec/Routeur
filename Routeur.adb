@@ -150,7 +150,7 @@ package body Routeur is
     -- Variables globales pour la recherche de la meilleure route
     Recherche_IP_Paquet : T_IP;           -- L'IP qu'on cherche à router
     Meilleure_Inter     : Unbounded_String; -- Le résultat trouvé
-    Meilleur_Score      : Integer;          -- Le nombre de zéros du masque (plus il est petit, mieux c'est)
+    Meilleur_Score      : Integer;          -- Le nombre de zéros du masque 
 
     -- Procédure appelée pour chaque ligne de la table de routage
     procedure Examiner_Route (Destination : in T_IP; Route : in T_Route) is
@@ -165,8 +165,8 @@ package body Routeur is
         -- Si (Paquet MASQUÉ) == Destination de la route
         if Ip_To_Ub(Test_IP) = Ip_To_Ub(Destination) then
             
-            -- On calcule la précision du masque (nombre de zéros à la fin)
-            -- Moins il y a de zéros, plus le masque est long (/24 mieux que /16)
+            -- On calcule la précision du masque
+            
             Score_Courant := Adresse_IP.Adresse_Zero_Bit(Route.Masque);
 
             if Score_Courant < Meilleur_Score then
@@ -182,15 +182,13 @@ package body Routeur is
 
 	function Interface_Sortie (Adresse : T_IP; Table_Routage : T_LCA) return Unbounded_String is
 	begin
-        -- 1. Initialisation de la recherche
+        -- Initialisation de la recherche
         Recherche_IP_Paquet := Adresse;
         Meilleure_Inter := To_Unbounded_String("Erreur_Pas_De_Route"); -- Valeur par défaut
-        Meilleur_Score := 33; -- Impossible d'avoir plus de 32 zéros, donc 33 est le "pire" score initial
+        Meilleur_Score := 33; 
 
-        -- 2. On lance l'examen de toutes les routes
+        -- On lance l'examen de toutes les routes
         Parcourir_Table_Pour_Recherche(Table_Routage);
-
-        -- 3. On retourne ce qu'on a trouvé de mieux
         return Meilleure_Inter;
 
 	end Interface_Sortie;
@@ -251,7 +249,7 @@ package body Routeur is
 
             Num_Ligne :=  Integer (Line (Entree_paquets));
             Ligne_p := Get_Line (Entree_paquets);
-	    -- Supprime_Dernier (Ligne_p);
+	    
             Traiter_Ligne_Paquets (Ligne_p, Num_Ligne, Sortie_Resultats, Continuer, Table_Routage);
 
         end loop;
