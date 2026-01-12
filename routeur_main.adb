@@ -35,4 +35,6 @@ begin
         Table_Routage => La_Table_Routage
     );
 
+    Tab_Routage.Vider (La_Table_Routage);
+
 end Routeur_Main;
