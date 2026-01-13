@@ -1,0 +1,25 @@
+demo
+
+Projet : Simulation de routeur avec cache.
+
+
+1. Objectifs
+	Cette démonstration a pour objectif de montrer que le programme respecte le cahier des charges du projet.
+
+2. Lancement du programme et initialisation:
+	Le programme est lancé avec une table de routage, un fichier de paquets, un cache avec une politique de gestion. Il analyse les arguments, lit la table et initialise le cache.
+
+3. Routage sans cache:
+	Une première adresse IP est traitée. Le cache est vide, donc la table de routage est parcourue et la route correspondant au plus long masque est sélectionnée. La route est insérée dans le cache.
+
+4. Routage avec cache:
+	La même adresse IP est routée encore. La route est trouvée directement dans le cache et l’interface de sortie est retournée sans parcourir la table de routage.
+
+5. Saturation du cache et politique de remplacement:
+	Plusieurs adresses sont routées afin de remplir le cache. Lorsqu’une nouvelle entrée est ajoutée, une route existante est supprimée suivant la politique précisée (FIFO, LRU, LFU).
+
+6. Commandes et statistiques:
+	Les commandes d’affichage de la table de routage, du contenu du cache, des statistiques de cache et de terminaison du programme fonctionnent.
+
+7. Conclusion:
+	La démonstration montre que le programme respecte le cahier des charges : routage correct, gestion efficace du cache suivant la politique choisie.
