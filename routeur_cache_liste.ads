@@ -1,18 +1,8 @@
-with LCA;
 with Adresse_IP;  use Adresse_IP;
-with Cache_Liste;
+with Cache_Liste;  use Cache_Liste;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package Routeur_Cache_Liste is
-
-    type T_Route is record
-       Masque : T_IP;
-       Inter  : Unbounded_String;
-    end record;
-
-    package Tab_Routage is new LCA (T_Cle => T_IP, T_Valeur => T_Route);
-    use Tab_Routage;
-
 	
 
     procedure Recuperer_Arguments (
@@ -34,8 +24,9 @@ package Routeur_Cache_Liste is
     procedure Traiter_Fichiers_Paquets (
         Paquets   : in Unbounded_String;
         Resultats : in Unbounded_String;
-        Table_Routage : in Tab_Routage.T_LCA;
-	Taille : Integer
+        Table_Routage : in out Tab_Routage.T_LCA;
+        Taille : in Integer;
+        Politique : in T_Politique
     );
 
 

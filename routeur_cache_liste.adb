@@ -3,20 +3,11 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Text_IO.Unbounded_IO;  use Ada.Text_IO.Unbounded_IO;
 with Ada.Command_Line;          use Ada.Command_Line;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Float_Text_IO;         use Ada.Float_Text_IO;
+with Cache_Liste;
 
 package body Routeur_Cache_Liste is
 
-    procedure Afficher_Une_Route (Destination : in T_IP; Route : in T_Route) is
-    begin
-        Put(To_String(Ip_To_Ub(Destination)));
-        Put(" ");
-        Put(To_String(Ip_To_Ub(Route.Masque)));
-        Put(" ");
-        Put(To_String(Route.Inter));
-        New_Line;
-    end Afficher_Une_Route;
-
-    procedure Afficher_Table is new Tab_Routage.Faire_Pour_Chaque (Traiter => Afficher_Une_Route);
 
 
     procedure Recuperer_Arguments (Table : out Unbounded_String;
@@ -56,7 +47,7 @@ package body Routeur_Cache_Liste is
 
 
 
-    procedure Construire_Table (Table_Routage : out T_LCA; Table : in Unbounded_String) is
+    procedure Construire_Table (Table_Routage : out Tab_Routage.T_LCA; Table : in Unbounded_String) is
 
         Entree_Table : File_Type;
         Destination  : Unbounded_String;
@@ -156,9 +147,11 @@ package body Routeur_Cache_Liste is
 
     -- Instanciation du parcours
     procedure Parcourir_Table_Pour_Recherche is new Tab_Routage.Faire_Pour_Chaque (Traiter => Examiner_Route);
-    function Interface_Sortie (Adresse : T_IP; Table_Routage : T_LCA; Cache : T_Cache_Liste) return Unbounded_String is
+
+    procedure Interface_Sortie (Adresse : in T_IP; Table_Routage : in Tab_Routage.T_LCA; Cache : in out T_Cache_Liste; Meilleure_Inter : out Unbounded_String) is
         Bonne_Interface_S : Unbounded_String;
         Interface_S : Unbounded_String;
+
     begin
         -- Initialisation de la recherche
         Recherche_IP_Paquet := Adresse;
@@ -173,11 +166,10 @@ package body Routeur_Cache_Liste is
         Interface_S := Meilleure_Inter;
         Ajouter (Cache, Adresse, Interface_S, Bonne_Interface_S);
 
-        return Meilleure_Inter;
     end Interface_Sortie;
 
 
-    procedure Traiter_Ligne_Paquets (Ligne_p : in Unbounded_String; Num_Ligne : in Integer; Sortie_Resultats : in out File_Type; Continuer : in out Boolean; Table_Routage : in T_LCA; Cache : in out T_Cache_Liste) is
+    procedure Traiter_Ligne_Paquets (Ligne_p : in Unbounded_String; Num_Ligne : in Integer; Sortie_Resultats : in out File_Type; Continuer : in out Boolean; Table_Routage : in Tab_Routage.T_LCA; Cache : in out T_Cache_Liste) is
 
         Inter : Unbounded_String;
 
@@ -193,18 +185,27 @@ package body Routeur_Cache_Liste is
             New_Line;
             Continuer := false;
         elsif To_String(Ligne_p) = "table" then
-            Put ("nombre de paquets : " & Cache.Statistiques.Nombre_Routes);
-	    New_Line;
-            Put ("nombre de defauts : " & Cache.Statistiques.Nombre_Defauts);
-	    New_Line;
-            Put ("taux d'erreur     : " & Cache.Statistiques.Nombre_Defauts / Cache.Statistiques.Nombre_Routes);
-	    New_Line;
+            Put ("nombre de paquets : ");
+            Put (Stats(Cache).Nombre_Routes);
+            New_Line;
+            Put ("nombre de defauts : ");
+            Put(Stats(Cache).Nombre_Defauts);
+            New_Line;
+            Put ("taux d'erreur     : ");
+
+            if Stats(Cache).Nombre_Routes = 0.0 then
+                Put (0.0);
+            else
+                Put (Stats(Cache).Nombre_Defauts / Stats(Cache).Nombre_Routes);
+            end if;
+            Put("%");
+            New_Line;
 
         elsif To_String(Ligne_p) = "cache" then
-            Afficher_Debug (Cache.Contenu);
+            Afficher_Table (Cache);
 
         else
-            Inter := Interface_Sortie (Ub_To_Ip(Ligne_p), Table_Routage);
+            Interface_Sortie (Ub_To_Ip(Ligne_p), Table_Routage, Cache, Inter);
             Put (Sortie_resultats, Ligne_p & " " & Inter);
             New_Line (Sortie_resultats);
 
@@ -222,23 +223,25 @@ package body Routeur_Cache_Liste is
 
     end Supprime_Dernier;
 
-    procedure Traiter_Fichiers_Paquets (Paquets : in Unbounded_String; Resultats : in Unbounded_String; Table_Routage : in out T_LCA; Taille : Integer) is
 
-	package Cache is new Cache_Liste (Capacite => Taille);
-    	use Cache;
+
+
+    procedure Traiter_Fichiers_Paquets (Paquets : in Unbounded_String; Resultats : in Unbounded_String; Table_Routage : in out Tab_Routage.T_LCA; Taille : in Integer; Politique : in Cache_Liste.T_Politique) is
+
+        --package Cache is new Cache_Liste (Capacite => Taille);
 
         Entree_Paquets : File_Type;
         Sortie_Resultats : File_Type;
         Continuer : Boolean;
         Num_Ligne : Integer;
         Ligne_p : Unbounded_String;
-        Cache : T_Cache;
+        Cache : T_Cache_Liste(Taille);
 
     begin
 
         Open (Entree_Paquets, In_File, To_String (Paquets));
         Create (Sortie_Resultats, Out_File, To_String (Resultats));
-        Creer (Cache);
+        Creer (Cache, Politique);
         Continuer := true;
 
         while not (End_Of_File (Entree_Paquets)) and Continuer loop
@@ -250,7 +253,7 @@ package body Routeur_Cache_Liste is
 
         end loop;
 
-        Detruire (Table_Routage);
+        Tab_Routage.Detruire (Table_Routage);
         Detruire (Cache);
         Close (Entree_Paquets);
         Close (Sortie_Resultats);
