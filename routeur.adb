@@ -219,7 +219,11 @@ package body Routeur is
 
             Num_Ligne :=  Integer (Line (Entree_paquets));
             Ligne_p := Get_Line (Entree_paquets);
-	    Supprime_Dernier (Ligne_p);
+	    if End_Of_File (Entree_Paquets) then
+		Null;
+	    else
+	    	Supprime_Dernier (Ligne_p);
+	    end if;
             Traiter_Ligne_Paquets (Ligne_p, Num_Ligne, Sortie_Resultats, Continuer, Table_Routage);
 
         end loop;
