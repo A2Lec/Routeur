@@ -38,6 +38,7 @@ begin
     else
         Put_Line ("Statistiques désactivées");
     end if;
+    New_Line;
 
     Construire_Table (
         Table_Routage => La_Table_Routage,

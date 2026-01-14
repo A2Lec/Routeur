@@ -3,8 +3,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Text_IO.Unbounded_IO;  use Ada.Text_IO.Unbounded_IO;
 with Ada.Command_Line;          use Ada.Command_Line;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Float_Text_IO;         use Ada.Float_Text_IO;
-with Cache_Liste;
+with Adresse_IP;                use Adresse_IP;
 
 package body Routeur_Cache_Liste is
 
@@ -116,58 +115,6 @@ package body Routeur_Cache_Liste is
 
     end Construire_Table;
 
-    -- Variables globales pour la recherche de la meilleure route
-    Recherche_IP_Paquet : T_IP;             -- L'IP qu'on cherche à router
-    Meilleure_Inter     : Unbounded_String; -- Le résultat trouvé
-    Meilleur_Score      : Integer;          -- Le nombre de zéros du masque
-
-    -- Procédure appelée pour chaque ligne de la table de routage
-    procedure Examiner_Route (Destination : in T_IP; Route : in T_Route) is
-        Test_IP : T_IP;
-        Score_Courant : Integer;
-    begin
-        Test_IP := Recherche_IP_Paquet;
-
-        -- On applique le masque de cette route à notre paquet
-        Adresse_IP.Masquer_Adresse(Test_IP, Route.Masque);
-
-        -- Si (Paquet MASQUÉ) == Destination de la route
-        if Ip_To_Ub(Test_IP) = Ip_To_Ub(Destination) then
-
-            -- On calcule la précision du masque
-
-            Score_Courant := Adresse_IP.Adresse_Zero_Bit(Route.Masque);
-
-            if Score_Courant < Meilleur_Score then
-                Meilleur_Score := Score_Courant;
-                Meilleure_Inter := Route.Inter;
-            end if;
-        end if;
-    end Examiner_Route;
-
-    -- Instanciation du parcours
-    procedure Parcourir_Table_Pour_Recherche is new Tab_Routage.Faire_Pour_Chaque (Traiter => Examiner_Route);
-
-    procedure Interface_Sortie (Adresse : in T_IP; Table_Routage : in Tab_Routage.T_LCA; Cache : in out T_Cache_Liste; Meilleure_Inter : out Unbounded_String) is
-        Bonne_Interface_S : Unbounded_String;
-        Interface_S : Unbounded_String;
-
-    begin
-        -- Initialisation de la recherche
-        Recherche_IP_Paquet := Adresse;
-        Meilleure_Inter := To_Unbounded_String("Erreur_Pas_De_Route"); -- Valeur par défaut
-        Meilleur_Score := 33;
-
-        -- On lance l'examen de toutes les routes
-        Parcourir_Table_Pour_Recherche(Table_Routage);
-        Bonne_Interface_S := Meilleure_Inter;
-
-        Parcourir_Table_Pour_Recherche(Cache.Contenu);
-        Interface_S := Meilleure_Inter;
-        Ajouter (Cache, Adresse, Interface_S, Bonne_Interface_S);
-
-    end Interface_Sortie;
-
 
     procedure Traiter_Ligne_Paquets (Ligne_p : in Unbounded_String; Num_Ligne : in Integer; Sortie_Resultats : in out File_Type; Continuer : in out Boolean; Table_Routage : in Tab_Routage.T_LCA; Cache : in out T_Cache_Liste) is
 
@@ -184,26 +131,28 @@ package body Routeur_Cache_Liste is
             Put ("fin (ligne " & Integer'Image (Num_Ligne) & ")");
             New_Line;
             Continuer := false;
-        elsif To_String(Ligne_p) = "table" then
-            Put ("nombre de paquets : ");
-            Put (Stats(Cache).Nombre_Routes);
+        elsif To_String(Ligne_p) = "stat" then
+	    Put ("stat (ligne " & Integer'Image (Num_Ligne) & ")");
             New_Line;
-            Put ("nombre de defauts : ");
-            Put(Stats(Cache).Nombre_Defauts);
+            Put ("nombre de paquets : " & Integer'Image(Stats(Cache).Nombre_Routes));
+            New_Line;
+            Put ("nombre de defauts : " & Integer'Image(Stats(Cache).Nombre_Defauts));
             New_Line;
             Put ("taux d'erreur     : ");
 
-            if Stats(Cache).Nombre_Routes = 0.0 then
-                Put (0.0);
+            if Stats(Cache).Nombre_Routes = 0 then
+                Put (Integer'Image(0));
             else
-                Put (Stats(Cache).Nombre_Defauts / Stats(Cache).Nombre_Routes);
+                Put (Integer'Image(100 * Stats(Cache).Nombre_Defauts / Stats(Cache).Nombre_Routes));
             end if;
             Put("%");
             New_Line;
-
+	    New_Line;
         elsif To_String(Ligne_p) = "cache" then
+	    Put ("cache (ligne " & Integer'Image (Num_Ligne) & ")");
+            New_Line;
             Afficher_Table (Cache);
-
+	    New_Line;
         else
             Interface_Sortie (Ub_To_Ip(Ligne_p), Table_Routage, Cache, Inter);
             Put (Sortie_resultats, Ligne_p & " " & Inter);
@@ -225,7 +174,6 @@ package body Routeur_Cache_Liste is
 
 
 
-
     procedure Traiter_Fichiers_Paquets (Paquets : in Unbounded_String; Resultats : in Unbounded_String; Table_Routage : in out Tab_Routage.T_LCA; Taille : in Integer; Politique : in Cache_Liste.T_Politique) is
 
         --package Cache is new Cache_Liste (Capacite => Taille);
@@ -241,14 +189,18 @@ package body Routeur_Cache_Liste is
 
         Open (Entree_Paquets, In_File, To_String (Paquets));
         Create (Sortie_Resultats, Out_File, To_String (Resultats));
-        Creer (Cache, Politique);
+        Creer (Cache, Politique, Taille);
         Continuer := true;
 
         while not (End_Of_File (Entree_Paquets)) and Continuer loop
 
             Num_Ligne :=  Integer (Line (Entree_Paquets));
             Ligne_p := Get_Line (Entree_Paquets);
-            Supprime_Dernier (Ligne_p);
+	    if End_Of_File (Entree_Paquets) or Length(Ligne_p) < 6 then
+            	Null;
+	    else 
+		Supprime_Dernier (Ligne_p);
+	    end if;
             Traiter_Ligne_Paquets (Ligne_p, Num_Ligne, Sortie_Resultats, Continuer, Table_Routage, Cache);
 
         end loop;

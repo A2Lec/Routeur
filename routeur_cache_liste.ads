@@ -1,4 +1,3 @@
-with Adresse_IP;  use Adresse_IP;
 with Cache_Liste;  use Cache_Liste;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
