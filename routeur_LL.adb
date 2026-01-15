@@ -3,7 +3,7 @@ with Ada.Text_IO;           use Ada.Text_IO;
 with Routeur_Cache_Liste;   use Routeur_Cache_Liste;
 with Cache_Liste;  use Cache_Liste;
 
-procedure Routeur_Main_Cache_Liste is
+procedure Routeur_LL is
 
 
     Nom_Fichier_Table     : Unbounded_String;
@@ -61,4 +61,5 @@ begin
         Politique     => Politique
     );
 
-end Routeur_Main_Cache_Liste;
+end Routeur_LL;
+
