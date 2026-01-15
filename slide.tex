@@ -1,0 +1,180 @@
+\documentclass{beamer}
+%\documentclass[aspectratio=169]{beamer}
+\usepackage{ctex, hyperref}
+\usepackage[T1]{fontenc}
+% other packages
+\usepackage{latexsym,amsmath,xcolor,multicol,booktabs,calligra}
+\usepackage{graphicx,pstricks,listings,stackengine}
+
+\title{Présentation du projet}
+\subtitle{Routeur simple / Routeur avec cache}
+\author{BOULARD Arno, DE LECLUSE TREVOEDAL Alexis, EL MORHDER Yahya}
+\usepackage{CNU}
+
+% defs
+\def\cmd#1{\texttt{\color{red}\footnotesize $\backslash$#1}}
+\def\env#1{\texttt{\color{blue}\footnotesize #1}}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+\definecolor{halfgray}{gray}{0.55}
+
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\bfseries\color{deepblue},
+    emphstyle=\ttfamily\color{deepred},    % Custom highlighting style
+    stringstyle=\color{deepgreen},
+    numbers=left,
+    numberstyle=\small\color{halfgray},
+    rulesepcolor=\color{red!20!green!20!blue!20},
+    frame=shadowbox,
+}
+
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \tableofcontents[sectionstyle=show,subsectionstyle=show/shaded/hide,subsubsectionstyle=show/shaded/hide]
+\end{frame}
+
+
+\section{Structure du projet}
+
+\begin{frame}{Structure du projet}
+
+    Le projet est séparé en 3 programmes principaux: 
+    \begin{itemize}[<+-| alert@+>] 
+        \item Routeur\_main.adb : Programme principal de la version simple du routeur.
+        \item Routeur\_LA.adb : Routeur avec cache sous forme d'un arbre préfixe.
+        \item Routeur\_main\_cache\_liste.adb : Routeur avec cache sous forme d'une liste chaînée associative.
+    \end{itemize}
+\end{frame}
+
+
+\section{Modules et Conception}
+
+
+
+%Reutilisation du module LCA realise dans le mini-projet
+\subsection{Modules}
+\begin{frame}{Modules}
+    \begin{block}{Modules de base}
+        Permet la réutilisabilité.
+        \begin{itemize}
+            \item Adresse\_IP : Module de la manipulation des adresses IP.
+            \item LCA : Module de la liste chaînée pour la table de routage et aussi le cache.
+            \item Trie : Module de l'arbre préfixe pour le cache.
+        \end{itemize}
+    \end{block}
+    
+    \begin{block}{Autres Modules}
+        \begin{itemize}
+            \item Cache\_trie : Encapsulation du cache sous forme trie. 
+            \item Cache\_liste : Encapsulation du cache sous forme liste.
+            \item Routeur : Encapsulation des fonctionnalités du routeur simple.
+            \item Routeur\_cache\_liste : Encapsulation du routeur avec cache de structure LCA.
+        \end{itemize}
+    \end{block}
+\end{frame}
+\subsection{Conception}
+\begin{frame}{Conception}
+    \begin{block}{Raffinages successifs}    
+        \begin{itemize}
+            \item Décomposer le problème en sous-problèmes plus simples.
+            \item Répartition des responsabilités.
+            \item Traçabilité entre la conception et l'implémentation.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Conception}
+    \begin{block}{Type de données}
+        Pour la construction du routeur, On a adopté $Unbounded\_String$ comme type de donnée pour la représentation de l'adresse IP en raison de la facilité a manipuler les String. 
+    \end{block}
+    \begin{block}{Table de routage}
+        La structure de la table de routage est une LCA de type clé $T\_IP$ et valeur $T\_Route \{T\_IP,\ Interface\} $. 
+    \end{block}
+\end{frame}
+
+\begin{frame}{Conception}
+    \begin{block}{Trie}
+        \begin{itemize}
+            \item Exploiter directement la représentation binaire des adresses IPv4.
+            \item Temps de recherche borné par la longueur de l'adresse (32 bits).
+        \end{itemize}
+    \end{block}
+    
+\end{frame}
+
+
+\begin{frame}[fragile]{Conception}
+    L'implémentation de la structure d'un arbre préfixe est la suivante:
+    \begin{lstlisting}[language=Ada]
+type T_Cellule_Trie is record
+    Enfants : T_Enfants ; -- Tableau [0..1] de T_Trie
+    Est_Route : Boolean ; -- Indique si route presente
+    Interface_Sortie : Unbounded_String ;
+end record ;
+type T_Trie is access T_Cellule_Trie ;
+    \end{lstlisting}
+\end{frame}
+
+
+\section{Algorithmes}
+\begin{frame}{Algorithmes}
+    \begin{block}{Algorithme de routage}
+        Pour le routage, on recherche d'abord dans le cache si la destination à router est déjà contenue dans le cache.
+        La rapidité de la recherche dépend de la structure du cache employée:
+        \begin{itemize}
+            \item Cache LCA : recherche complète de complexité: $O(n)$.
+            \item Cache Trie : recherche de complexité: $O(32)$.
+        \end{itemize}
+        Pour un cache de taille +100, l'arbre préfixe est plus efficace.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Algorithmes}
+    \begin{block}{Algorithme de routage}
+        Au cas où le cache ne contient pas une route correspondante, on effectue une recherche du plus long préfixe dans la table LCA. Pour chaque route de la table :
+        \begin{itemize}
+            \item  Application du masque de la route à l'adresse cible.
+            \item  Comparaison avec la destination de la route.
+            \item  Si correspondance : calcul du nombre de bits à 0 du masque.
+            \item  Sélection de la route avec le plus petit nombre de bits à 0 (masque le plus long).
+        \end{itemize}
+        Enfin, on ajoute la route au cache avec le plus long masque existant sur la route en effectuant un remplacement selon la politique de gestion si la taille dépasse la taille maximale.
+    \end{block}
+\end{frame}
+
+\section{Politique du cache}
+\begin{frame}
+    \begin{block}{Gestion du cache}
+        La gestion du cache se fait selon les trois politiques qui permettent de réduire les recherches coûteuses, les avantages de chaque politique varient entre eux:
+        \begin{itemize}
+            \item  FIFO: plus simple à implémenter.
+            \item  LFU: utile sur trafic stable.
+            \item  LRU: souvent plus réaliste.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+
+\section{Bilan}
+
+\begin{frame}
+     \begin{block}{Conclusion}
+         Les choix de conception retenus permettent d'illustrer clairement l'impact des structures de données et des politiques de cache sur les performances d'un routeur. L'architecture modulaire et la démarche de raffinage ont facilité le développement, les tests et la comparaison des différentes solutions, tout en assurant un code structuré, évolutif et conforme aux objectifs du projet.
+     \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        {\Huge\calligra Merci!}
+    \end{center}
+\end{frame}
+
+\end{document}
