@@ -196,11 +196,7 @@ package body Routeur_Cache_Liste is
 
             Num_Ligne :=  Integer (Line (Entree_Paquets));
             Ligne_p := Get_Line (Entree_Paquets);
-	    if End_Of_File (Entree_Paquets) or Length(Ligne_p) < 6 then
-            	Null;
-	    else 
-		Supprime_Dernier (Ligne_p);
-	    end if;
+	    Supprime_Dernier (Ligne_p);
             Traiter_Ligne_Paquets (Ligne_p, Num_Ligne, Sortie_Resultats, Continuer, Table_Routage, Cache);
 
         end loop;
