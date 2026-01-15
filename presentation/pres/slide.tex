@@ -46,9 +46,9 @@
 
 \begin{frame}{Structure du projet}
 
-    Le projet est séparé en 3 programmes principales: 
+    Le projet est séparé en 3 programmes principaux: 
     \begin{itemize}[<+-| alert@+>] 
-        \item Routeur\_main.adb : Programme principale de la version simple du routeur.
+        \item Routeur\_main.adb : Programme principal de la version simple du routeur.
         \item Routeur\_LA.adb : Routeur avec cache sous forme d'un arbre préfixe.
         \item Routeur\_main\_cache\_liste.adb : Routeur avec cache sous forme d'une liste chaînée associative.
     \end{itemize}
@@ -93,7 +93,7 @@
 
 \begin{frame}{Conception}
     \begin{block}{Type de données}
-        Pour la construction du routeur, On a adopté $Unbounded\_String$ comme type de données pour la représentation de l'adresse IP du a la facilité de manipuler les strings. 
+        Pour la construction du routeur, On a adopté $Unbounded\_String$ comme type de donnée pour la représentation de l'adresse IP en raison de la facilité a manipuler les String. 
     \end{block}
     \begin{block}{Table de routage}
         La structure de la table de routage est une LCA de type clé $T\_IP$ et valeur $T\_Route \{T\_IP,\ Interface\} $. 
@@ -153,7 +153,7 @@ type T_Trie is access T_Cellule_Trie ;
 \section{Politique du cache}
 \begin{frame}
     \begin{block}{Gestion du cache}
-        La gestion du cache se fait selon les trois politiques qui permet de réduire les recherches coûteuses, les avantages de chaque politique varient entre eux:
+        La gestion du cache se fait selon les trois politiques qui permettent de réduire les recherches coûteuses, les avantages de chaque politique varient entre eux:
         \begin{itemize}
             \item  FIFO: plus simple à implémenter.
             \item  LFU: utile sur trafic stable.
